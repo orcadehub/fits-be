@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+// const bcrypt = require("bcrypt");
+// const jwt = require("jsonwebtoken");
 const User = mongoose.model("User");
 
 // Secret Key for JWT
-const JWT_SECRET = "your_super_secret_key"; // Change this to a secure key.
+// const JWT_SECRET = "your_super_secret_key"; // Change this to a secure key.
 
 const foodAndExercisePlan = [
   // Day 1
@@ -121,14 +121,14 @@ router.post("/signup", async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create new user
     const user = new User({
       name,
       email,
       phone,
-      password: hashedPassword,
+      password: password,
     });
 
     await user.save();
@@ -160,13 +160,12 @@ router.post("/login", async (req, res) => {
     }
 
     // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (password !== user.password) {
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
     // Generate JWT Token
-    const token = jwt.sign({ id: user._id }, JWT_SECRET);
+    const token = "I am token";
 
     // Exclude password field before sending user details
     const { password: _, ...userDetails } = user.toObject();
@@ -230,7 +229,7 @@ router.post("/assign-plan", async (req, res) => {
 // Route to fetch user's details and food/exercise plan
 router.post("/user-details", async (req, res) => {
   const { userId } = req.body; // Get the user ID from the session or JWT token
-  console.log(userId)
+  console.log(userId);
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
   }
