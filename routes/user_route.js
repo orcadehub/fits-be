@@ -141,6 +141,7 @@ router.post("/signup", async (req, res) => {
 
 // ---------------- LOGIN ROUTE ----------------
 router.post("/login", async (req, res) => {
+  console.log("Triggered Login")
   const { emailOrPhone, password } = req.body;
 
   if (!emailOrPhone || !password) {
