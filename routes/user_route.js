@@ -141,7 +141,7 @@ router.post("/signup", async (req, res) => {
 
 // ---------------- LOGIN ROUTE ----------------
 router.post("/login", async (req, res) => {
-  console.log("Triggered Login")
+  console.log("Triggered Login");
   const { emailOrPhone, password } = req.body;
 
   if (!emailOrPhone || !password) {
@@ -229,19 +229,24 @@ router.post("/assign-plan", async (req, res) => {
 
 // Route to fetch user's details and food/exercise plan
 router.post("/user-details", async (req, res) => {
-  const { userId } = req.body; // Get the user ID from the session or JWT token
-  console.log(userId);
+  const { userId } = req.body;
+
   if (!userId) {
     return res.status(400).json({ error: "User ID is required" });
   }
+
   try {
+    // Fetch user by ID
     const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const { name, email, phone, items } = user;
+    // Destructure relevant fields
+    const { name, email, phone, items, completedDays } = user;
+
+    // Map food and exercise plans
     const foodAndExercise = items.food.map((day, index) => ({
       day: index + 1,
       breakfast: day.breakfast,
@@ -251,10 +256,67 @@ router.post("/user-details", async (req, res) => {
       eveningExercise: items.exercise[index]?.evening,
     }));
 
-    res.json({ name, email, phone, foodAndExercise });
+    // Include completedDays in the response
+    res.json({
+      name,
+      email,
+      phone,
+      foodAndExercise,
+      completedDays: completedDays || [], // Default to empty array if undefined
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching user details:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/mark-completed", async (req, res) => {
+  try {
+    const { userId, day } = req.body;
+    console.log(userId);
+
+    if (!userId || day === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID and Day are required." });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    // Check if the day is already marked as completed
+    if (user.completedDays.includes(day)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Day already marked as completed." });
+    }
+
+    // Update completedDays array
+    user.completedDays.push(day);
+
+    // Recalculate adherence percentage
+    const totalDays = 7; // Assuming 7-day schedule
+    const adherencePercentage = (user.completedDays.length / totalDays) * 100;
+
+    user.scheduleAdherence = adherencePercentage.toFixed(2);
+
+    // Save updates
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Day ${day} marked as completed.`,
+      completedDays: user.completedDays,
+      scheduleAdherence: user.scheduleAdherence,
+    });
+  } catch (error) {
+    console.error("Error marking day as completed:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 

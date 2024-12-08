@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isNewUser: { type: Boolean, default: true },
+
   items: {
     food: [
       {
@@ -21,7 +22,10 @@ const userSchema = new mongoose.Schema({
       },
     ],
   },
-});
 
+  // New Fields
+  completedDays: { type: [Number], default: [] }, // Array to track completed days
+  scheduleAdherence: { type: Number, default: 0 }, // Percentage of adherence
+});
 
 module.exports = mongoose.model("User", userSchema);
