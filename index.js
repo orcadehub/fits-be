@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
+// const User = mongoose.model("User");
+const Detection =require("./models/det_model");
+const User =require("./models/user_model");
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3300;
@@ -22,14 +25,11 @@ mongoose
   .then(() => console.log("Successfully connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-// Define Detection Model
-const detectionSchema = new mongoose.Schema({
-  eegValue: { type: Number, required: true }, // Accepts integers and floats
-  seizureDetected: { type: Boolean, required: true },
-  timestamp: { type: Date, default: Date.now },
-});
+  require("./models/user_model");
+require("./models/det_model");
+app.use(require("./routes/user_route"));
 
-const Detection = mongoose.model("Detection", detectionSchema);
+
 
 // HTTP Server and Socket.IO Initialization
 const server = http.createServer(app);
@@ -40,39 +40,45 @@ const io = socketIo(server, {
   },
 });
 
-// POST API to Save Detection Data
+// POST /detected - Save Detection for a User
 app.post("/detected", async (req, res) => {
-  const { eegValue, seizureDetected } = req.body;
+  const { userId, eegValue, seizureDetected } = req.body;
 
-  if (eegValue === undefined || seizureDetected === undefined) {
+  if (!userId || eegValue === undefined || seizureDetected === undefined) {
     return res.status(400).json({ message: "Invalid data format" });
   }
 
   try {
-    const newDetection = new Detection({ eegValue, seizureDetected });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const newDetection = new Detection({ userId, eegValue, seizureDetected });
     await newDetection.save();
+
+    user.detections.push(newDetection._id);
+    await user.save();
 
     console.log("Detection Data Received:", newDetection);
 
-    // Emit the latest data to all connected clients
-    io.emit("newDetectionUpdate", newDetection);
+    // Emit new detection to the user's room
+    io.to(userId).emit("newDetectionUpdate", newDetection);
 
-    res
-      .status(200)
-      .json({ message: "Data received successfully", data: newDetection });
+    res.status(200).json({ message: "Data received successfully", data: newDetection });
   } catch (err) {
     console.error("Error saving detection data:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// GET API to Fetch Recent Detections
-app.get("/detections", async (req, res) => {
+// GET /detections/:userId - Fetch User's Detections
+app.get("/detections/:userId", async (req, res) => {
+  const { userId } = req.params;
+
   try {
-    const detections = await Detection.find()
-      .sort({ timestamp: -1 })
-      .limit(100); // Get the latest 100 records
-    res.status(200).json(detections);
+    const user = await User.findById(userId).populate("detections");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user.detections);
   } catch (err) {
     console.error("Error fetching detections:", err);
     res.status(500).json({ message: "Server error" });
@@ -83,13 +89,10 @@ app.get("/detections", async (req, res) => {
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  // Send the latest 100 detections on connection
-  Detection.find()
-    .sort({ timestamp: -1 })
-    .limit(100)
-    .then((detections) => {
-      socket.emit("initialDetections", detections);
-    });
+  socket.on("joinUserRoom", (userId) => {
+    socket.join(userId);
+    console.log(`Client joined room for userId: ${userId}`);
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected");

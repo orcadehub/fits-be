@@ -23,9 +23,11 @@ const userSchema = new mongoose.Schema({
     ],
   },
 
-  // New Fields
-  completedDays: { type: [Number], default: [] }, // Array to track completed days
-  scheduleAdherence: { type: Number, default: 0 }, // Percentage of adherence
+  completedDays: { type: [Number], default: [] },
+  scheduleAdherence: { type: Number, default: 0 },
+
+  // New Field: Store references to detection records
+  detections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Detection" }],
 });
 
 module.exports = mongoose.model("User", userSchema);

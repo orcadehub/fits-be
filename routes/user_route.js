@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
+const Detection = mongoose.model("Detection");
 // const fs = require("fs");
 const axios = require("axios");
 const { faker } = require("@faker-js/faker");
