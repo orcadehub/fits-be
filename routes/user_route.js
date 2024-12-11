@@ -2,58 +2,12 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
-const fs = require("fs");
-const axios = require("axios");
+// const fs = require("fs");
+// const axios = require("axios");
 // const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
 
 
-const assign=async ()=> {
-  const randomNumber = Math.floor(Math.random() * 4999) + 1;
-  const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"))
-  console.log(plansData[randomNumber].plan);
-  return plansData[randomNumber].plan;
-}
-const foodAndExercisePlan = assign();
-router.post("/assign-plan", async (req, res) => {
-  console.log("reached");
-  const { userId } = req.body;
 
-  if (!userId) {
-    return res.status(400).json({ error: "User ID is required" });
-  }
-
-  try {
-    // Fetch the user
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Prepare the food and exercise plan
-    const plan = foodAndExercisePlan.map((day, index) => ({
-      day: index + 1,
-      food: day.food,
-      exercise: day.exercise,
-    }));
-
-    // Update user's items in database
-    user.items.food = plan.map((p) => p.food);
-    user.items.exercise = plan.map((p) => p.exercise);
-
-    // Update user's `isNew` to false (onboarding completed)
-    user.isNewUser = false;
-
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: "Plan assigned successfully", items: user.items });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
 
 // ---------------- SIGNUP ROUTE ----------------
 router.post("/signup", async (req, res) => {
