@@ -3,8 +3,13 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 // const fs = require("fs");
-// const axios = require("axios");
+const axios = require("axios");
 const { faker } = require("@faker-js/faker");
+
+const baseURL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3300/"
+    : "https://fits-be.vercel.app/";
 // const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
 // Function to generate a 7-day personalized food and exercise plan
 const generatePersonalizedPlan = () => {
@@ -346,15 +351,14 @@ const generatePersonalizedPlan = () => {
 const assign = async () => {
   const randomNumber = Math.floor(Math.random() * 4999) + 1;
   const plan = generatePersonalizedPlan();
-  console.log(plan);
+  // console.log(plan);
   return plan;
 };
 
-
 router.post("/assign-plan", async (req, res) => {
   console.log("reached");
-   // Await the assignment of the food and exercise plan
-   const foodAndExercisePlan = await assign();
+  // Await the assignment of the food and exercise plan
+  const foodAndExercisePlan = await assign();
   const { userId } = req.body;
 
   if (!userId) {
@@ -375,6 +379,7 @@ router.post("/assign-plan", async (req, res) => {
       food: day.food,
       exercise: day.exercise,
     }));
+    console.log(plan);
 
     // Update user's items in database
     user.items.food = plan.map((p) => p.food);
@@ -391,6 +396,61 @@ router.post("/assign-plan", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/mark-completed", async (req, res) => {
+  try {
+    const { userId, day } = req.body;
+    console.log(userId);
+
+    if (!userId || day === undefined) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User ID and Day are required." });
+    }
+
+    // Fetch user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found." });
+    }
+
+    // Check if the day is already marked as completed
+    if (user.completedDays.includes(day)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Day already marked as completed." });
+    }
+
+    // Update completedDays array
+    user.completedDays.push(day);
+
+    // Recalculate adherence percentage
+    const totalDays = 60; // Assuming 7-day schedule
+    const adherencePercentage = (user.completedDays.length / totalDays) * 100;
+
+    user.scheduleAdherence = adherencePercentage.toFixed(2);
+
+    if (user.completedDays.length % 7 === 0) {
+      await axios.post(`${baseURL}/assign-plan`, {
+        userId,
+      });
+    }
+    // Save updates
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Day ${day} marked as completed.`,
+      completedDays: user.completedDays,
+      scheduleAdherence: user.scheduleAdherence,
+    });
+  } catch (error) {
+    console.error("Error marking day as completed:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 
@@ -494,86 +554,37 @@ router.post("/user-details", async (req, res) => {
 
   try {
     // Fetch user by ID
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean(); // Fetch data as plain object
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Destructure relevant fields
-    const { name, email, phone, items, completedDays } = user;
+    // Destructure fields to exclude password
+    const { password, ...userWithoutPassword } = user;
+
+    // Calculate day count
+    const dayCount = user.completedDays.length;
 
     // Map food and exercise plans
-    const foodAndExercise = items.food.map((day, index) => ({
-      day: index + 1,
+    const foodAndExercise = user.items.food.map((day, index) => ({
+      day: index + 1 + dayCount,
       breakfast: day.breakfast,
       lunch: day.lunch,
       dinner: day.dinner,
-      morningExercise: items.exercise[index]?.morning,
-      eveningExercise: items.exercise[index]?.evening,
+      morningExercise: user.items.exercise[index]?.morning,
+      eveningExercise: user.items.exercise[index]?.evening,
     }));
 
-    // Include completedDays in the response
+    // Return response including user details without password
     res.json({
-      name,
-      email,
-      phone,
+      user: userWithoutPassword,
       foodAndExercise,
-      completedDays: completedDays || [], // Default to empty array if undefined
+      completedDays: user.completedDays || [], // Default to empty array if undefined
     });
   } catch (error) {
     console.error("Error fetching user details:", error);
     res.status(500).json({ error: "Server error" });
-  }
-});
-
-router.post("/mark-completed", async (req, res) => {
-  try {
-    const { userId, day } = req.body;
-    console.log(userId);
-
-    if (!userId || day === undefined) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID and Day are required." });
-    }
-
-    // Fetch user
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    // Check if the day is already marked as completed
-    if (user.completedDays.includes(day)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Day already marked as completed." });
-    }
-
-    // Update completedDays array
-    user.completedDays.push(day);
-
-    // Recalculate adherence percentage
-    const totalDays = 7; // Assuming 7-day schedule
-    const adherencePercentage = (user.completedDays.length / totalDays) * 100;
-
-    user.scheduleAdherence = adherencePercentage.toFixed(2);
-
-    // Save updates
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: `Day ${day} marked as completed.`,
-      completedDays: user.completedDays,
-      scheduleAdherence: user.scheduleAdherence,
-    });
-  } catch (error) {
-    console.error("Error marking day as completed:", error);
-    res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
 
