@@ -3,15 +3,17 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const fs = require("fs");
+const axios = require("axios");
+// const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
 
-const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
-// console.log(randomNumber);
-function assign() {
+
+const assign=async ()=> {
   const randomNumber = Math.floor(Math.random() * 4999) + 1;
+  const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"))
+  console.log(plansData[randomNumber].plan);
   return plansData[randomNumber].plan;
 }
 const foodAndExercisePlan = assign();
-
 router.post("/assign-plan", async (req, res) => {
   console.log("reached");
   const { userId } = req.body;
