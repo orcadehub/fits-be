@@ -10,8 +10,27 @@ const PORT = process.env.PORT || 3300;
 const app = express();
 
 // Middlewares
-app.use(cors());
 app.use(express.json());
+
+// Dynamic CORS configuration for local and deployed frontend
+const allowedOrigins = [
+  "http://localhost:3000",            // Local frontend
+  "https://fits-fe-nu.vercel.app",    // Deployed frontend
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 
 // Set strictQuery to avoid warnings
 mongoose.set("strictQuery", true);
@@ -24,10 +43,6 @@ mongoose
   .then(() => console.log("Successfully connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-// Include models and routes
-require("./models/user_model");
-app.use(require("./routes/user_route"));
-
 // Basic route to check if server is running
 app.get("/", (req, res) => {
   res.send("Server is working - nov-16 4pm");
@@ -37,7 +52,7 @@ app.get("/", (req, res) => {
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*", // Allow all origins for testing
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
