@@ -1,99 +1,56 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-// const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
 const User = mongoose.model("User");
+const fs = require("fs");
 
-// Secret Key for JWT
-// const JWT_SECRET = "your_super_secret_key"; // Change this to a secure key.
+const plansData = JSON.parse(fs.readFileSync("./user7DayPlans.json", "utf-8"));
+const randomNumber = Math.floor(Math.random() * 4999) + 1;
+const foodAndExercisePlan=plansData[randomNumber].plan
+console.log(foodAndExercisePlan)
+// console.log(plansData);
+// Endpoint to assign food and exercise plan
+// Endpoint to assign food and exercise plan
+router.post("/assign-plan", async (req, res) => {
+  console.log("reached");
+  const { userId } = req.body;
 
-const foodAndExercisePlan = [
-  // Day 1
-  {
-    food: {
-      breakfast: "Oatmeal with fruits",
-      lunch: "Grilled chicken with salad",
-      dinner: "Steamed vegetables with brown rice",
-    },
-    exercise: {
-      morning: "15-minute jogging",
-      evening: "30-minute yoga session",
-    },
-  },
-  // Day 2
-  {
-    food: {
-      breakfast: "Smoothie with spinach and banana",
-      lunch: "Quinoa with grilled fish",
-      dinner: "Chicken soup with steamed broccoli",
-    },
-    exercise: {
-      morning: "20 push-ups and planks",
-      evening: "Cycling for 20 minutes",
-    },
-  },
-  // Day 3
-  {
-    food: {
-      breakfast: "Boiled eggs with whole-grain toast",
-      lunch: "Grilled turkey wrap with veggies",
-      dinner: "Baked salmon with asparagus",
-    },
-    exercise: {
-      morning: "10-minute brisk walking",
-      evening: "45-minute pilates session",
-    },
-  },
-  // Day 4
-  {
-    food: {
-      breakfast: "Greek yogurt with nuts and honey",
-      lunch: "Brown rice with sautéed tofu and vegetables",
-      dinner: "Lentil soup with spinach and whole-grain bread",
-    },
-    exercise: {
-      morning: "30 squats and lunges",
-      evening: "30-minute swimming",
-    },
-  },
-  // Day 5
-  {
-    food: {
-      breakfast: "Chia pudding with berries",
-      lunch: "Grilled chicken with sweet potato and green beans",
-      dinner: "Stir-fried shrimp with quinoa and veggies",
-    },
-    exercise: {
-      morning: "20-minute skipping rope",
-      evening: "40-minute strength training",
-    },
-  },
-  // Day 6
-  {
-    food: {
-      breakfast: "Banana pancakes with almond butter",
-      lunch: "Whole-wheat pasta with tomato and spinach sauce",
-      dinner: "Stuffed bell peppers with black beans and rice",
-    },
-    exercise: {
-      morning: "20 push-ups and 30 sit-ups",
-      evening: "25-minute meditation and stretching",
-    },
-  },
-  // Day 7
-  {
-    food: {
-      breakfast: "Avocado toast with poached eggs",
-      lunch: "Grilled fish tacos with cabbage slaw",
-      dinner: "Chicken stew with root vegetables",
-    },
-    exercise: {
-      morning: "15-minute walk with light stretches",
-      evening: "40-minute dancing or Zumba session",
-    },
-  },
-];
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  try {
+    // Fetch the user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Prepare the food and exercise plan
+    const plan = foodAndExercisePlan.map((day, index) => ({
+      day: index + 1,
+      food: day.food,
+      exercise: day.exercise,
+    }));
+
+    // Update user's items in database
+    user.items.food = plan.map((p) => p.food);
+    user.items.exercise = plan.map((p) => p.exercise);
+
+    // Update user's `isNew` to false (onboarding completed)
+    user.isNew = false;
+
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ message: "Plan assigned successfully", items: user.items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // ---------------- SIGNUP ROUTE ----------------
 router.post("/signup", async (req, res) => {
@@ -179,48 +136,6 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Endpoint to assign food and exercise plan
-router.post("/assign-plan", async (req, res) => {
-  console.log("reached");
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: "User ID is required" });
-  }
-
-  try {
-    // Fetch the user
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    // Prepare the food and exercise plan
-    const plan = foodAndExercisePlan.map((day, index) => ({
-      day: index + 1,
-      food: day.food,
-      exercise: day.exercise,
-    }));
-
-    // Update user's items in database
-    user.items.food = plan.map((p) => p.food);
-    user.items.exercise = plan.map((p) => p.exercise);
-
-    // Update user's `isNew` to false (onboarding completed)
-    user.isNew = false;
-
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: "Plan assigned successfully", items: user.items });
-  } catch (err) {
-    console.error(err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
