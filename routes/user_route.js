@@ -349,10 +349,12 @@ const assign = async () => {
   console.log(plan);
   return plan;
 };
-const foodAndExercisePlan = assign();
+
 
 router.post("/assign-plan", async (req, res) => {
   console.log("reached");
+   // Await the assignment of the food and exercise plan
+   const foodAndExercisePlan = await assign();
   const { userId } = req.body;
 
   if (!userId) {
