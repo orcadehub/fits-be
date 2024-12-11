@@ -5,12 +5,13 @@ const User = mongoose.model("User");
 const fs = require("fs");
 
 const plansData = JSON.parse(fs.readFileSync("./user7DayPlans.json", "utf-8"));
-const randomNumber = Math.floor(Math.random() * 4999) + 1;
-const foodAndExercisePlan=plansData[randomNumber].plan
-console.log(foodAndExercisePlan)
-// console.log(plansData);
-// Endpoint to assign food and exercise plan
-// Endpoint to assign food and exercise plan
+// console.log(randomNumber);
+function assign() {
+  const randomNumber = Math.floor(Math.random() * 4999) + 1;
+  return plansData[randomNumber].plan;
+}
+const foodAndExercisePlan = assign();
+
 router.post("/assign-plan", async (req, res) => {
   console.log("reached");
   const { userId } = req.body;
