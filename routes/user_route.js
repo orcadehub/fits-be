@@ -39,7 +39,7 @@ router.post("/assign-plan", async (req, res) => {
     user.items.exercise = plan.map((p) => p.exercise);
 
     // Update user's `isNew` to false (onboarding completed)
-    user.isNew = false;
+    user.isNewUser = false;
 
     await user.save();
 
