@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const User = mongoose.model("User");
 const fs = require("fs");
 
-const plansData = JSON.parse(fs.readFileSync("./user7DayPlans.json", "utf-8"));
+const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
 // console.log(randomNumber);
 function assign() {
   const randomNumber = Math.floor(Math.random() * 4999) + 1;
