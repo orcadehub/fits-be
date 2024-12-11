@@ -11,31 +11,10 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
-
-// Dynamic CORS configuration for local and deployed frontend
-const allowedOrigins = [
-  "http://localhost:3000",            // Local frontend
-  "https://fits-fe-nu.vercel.app",    // Deployed frontend
-];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST"],
-    credentials: true,
-  })
-);
-
-// Set strictQuery to avoid warnings
-mongoose.set("strictQuery", true);
+app.use(cors());
 
 // MongoDB Connection
+mongoose.set("strictQuery", true);
 mongoose
   .connect(MONGO_URI, {
     serverSelectionTimeoutMS: 15000,
@@ -43,65 +22,76 @@ mongoose
   .then(() => console.log("Successfully connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-// Basic route to check if server is running
-app.get("/", (req, res) => {
-  res.send("Server is working - nov-16 4pm");
+// Define Detection Model
+const detectionSchema = new mongoose.Schema({
+  eegValue: Number,
+  seizureDetected: Boolean,
+  timestamp: { type: Date, default: Date.now },
 });
+const Detection = mongoose.model("Detection", detectionSchema);
 
 // HTTP Server and Socket.IO Initialization
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: ["http://localhost:3000", "https://fits-fe-nu.vercel.app"],
     methods: ["GET", "POST"],
   },
 });
 
-// Array to store all EEG detections
-let detectionHistory = [];
-
-// POST API endpoint to receive data from Arduino
-app.post("/detected", (req, res) => {
+// POST API to Save Detection Data
+app.post("/detected", async (req, res) => {
   const { eegValue, seizureDetected } = req.body;
 
-  // Validate incoming data
   if (eegValue === undefined || seizureDetected === undefined) {
     return res.status(400).json({ message: "Invalid data format" });
   }
 
-  // Add detection data to history
-  const detection = {
-    eegValue,
-    seizureDetected,
-    timestamp: new Date(),
-  };
-  detectionHistory.push(detection);
+  try {
+    const newDetection = new Detection({ eegValue, seizureDetected });
+    await newDetection.save();
 
-  console.log("Detection Data Received:", detection);
+    console.log("Detection Data Received:", newDetection);
 
-  // Emit updated detection history to all connected WebSocket clients
-  io.emit("detectionHistoryUpdate", detectionHistory);
+    // Emit the latest data to all connected clients
+    io.emit("newDetectionUpdate", newDetection);
 
-  // Respond to Arduino with success message
-  res.status(200).json({
-    message: "Data received successfully",
-    data: detection,
-  });
+    res.status(200).json({ message: "Data received successfully", data: newDetection });
+  } catch (err) {
+    console.error("Error saving detection data:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
-// WebSocket connection event
+// GET API to Fetch Recent Detections
+app.get("/detections", async (req, res) => {
+  try {
+    const detections = await Detection.find().sort({ timestamp: -1 }).limit(100); // Get the latest 100 records
+    res.status(200).json(detections);
+  } catch (err) {
+    console.error("Error fetching detections:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// WebSocket Connection
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  // Send the entire detection history to newly connected clients
-  socket.emit("detectionHistoryUpdate", detectionHistory);
+  // Send the latest 100 detections on connection
+  Detection.find()
+    .sort({ timestamp: -1 })
+    .limit(100)
+    .then((detections) => {
+      socket.emit("initialDetections", detections);
+    });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
 });
 
-// Start the server with HTTP and Socket.IO
+// Start the Server
 server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
