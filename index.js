@@ -1,14 +1,16 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
+const http = require("http");
+const socketIo = require("socket.io");
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3300;
 const app = express();
 
+// Middlewares
 app.use(cors());
-// JSON middleware for Express
 app.use(express.json());
 
 // Set strictQuery to avoid warnings
@@ -24,21 +26,66 @@ mongoose
 
 // Include models and routes
 require("./models/user_model");
-// require("./models/product_model");
 app.use(require("./routes/user_route"));
-// app.use(require("./routes/user_related_route"));
-// app.use(require("./routes/product_route"));
 
 // Basic route to check if server is running
 app.get("/", (req, res) => {
-  res.send("Server is working nov-16 4pm");
+  res.send("Server is working - nov-16 4pm");
 });
 
-// Start Express server
-app.listen(PORT, () => {
+// HTTP Server and Socket.IO Initialization
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Allow all origins for testing
+    methods: ["GET", "POST"],
+  },
+});
+
+// Store latest detection data
+let latestDetection = {};
+
+// POST API endpoint to receive data from Arduino
+app.post("/detected", (req, res) => {
+  const { eegValue, seizureDetected } = req.body;
+
+  // Validate incoming data
+  if (eegValue === undefined || seizureDetected === undefined) {
+    return res.status(400).json({ message: "Invalid data format" });
+  }
+
+  // Update latest detection data
+  latestDetection = {
+    eegValue,
+    seizureDetected,
+    timestamp: new Date(),
+  };
+
+  console.log("Detection Data Received:", latestDetection);
+
+  // Emit data to all connected WebSocket clients
+  io.emit("detectionUpdate", latestDetection);
+
+  // Respond to Arduino with success message
+  res.status(200).json({
+    message: "Data received successfully",
+    data: latestDetection,
+  });
+});
+
+// WebSocket connection event
+io.on("connection", (socket) => {
+  console.log("New client connected");
+
+  // Send the latest detection data to newly connected clients
+  socket.emit("detectionUpdate", latestDetection);
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected");
+  });
+});
+
+// Start the server with HTTP and Socket.IO
+server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
-  
-
-
-

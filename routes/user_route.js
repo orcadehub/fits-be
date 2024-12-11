@@ -575,9 +575,12 @@ router.post("/user-details", async (req, res) => {
       morningExercise: user.items.exercise[index]?.morning,
       eveningExercise: user.items.exercise[index]?.evening,
     }));
-
+    const { name, email, phone, items, completedDays } = user;
     // Return response including user details without password
     res.json({
+      name,
+      email,
+      phone,
       user: userWithoutPassword,
       foodAndExercise,
       completedDays: user.completedDays || [], // Default to empty array if undefined
@@ -587,5 +590,8 @@ router.post("/user-details", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
+
 
 module.exports = router;
