@@ -4,10 +4,393 @@ const mongoose = require("mongoose");
 const User = mongoose.model("User");
 // const fs = require("fs");
 // const axios = require("axios");
+const { faker } = require("@faker-js/faker");
 // const plansData = JSON.parse(fs.readFileSync("user7DayPlans.json", "utf-8"));
+// Function to generate a 7-day personalized food and exercise plan
+const generatePersonalizedPlan = () => {
+  const plan = [
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+    {
+      food: {
+        breakfast: faker.helpers.arrayElement([
+          "Oatmeal with fruits",
+          "Smoothie with spinach and banana",
+          "Boiled eggs with whole-grain toast",
+          "Greek yogurt with nuts and honey",
+          "Chia pudding with berries",
+          "Avocado toast with poached eggs",
+          "Banana pancakes with almond butter",
+        ]),
+        lunch: faker.helpers.arrayElement([
+          "Grilled chicken with salad",
+          "Quinoa with grilled fish",
+          "Grilled turkey wrap with veggies",
+          "Brown rice with sautéed tofu and vegetables",
+          "Grilled chicken with sweet potato and green beans",
+          "Whole-wheat pasta with tomato sauce",
+        ]),
+        dinner: faker.helpers.arrayElement([
+          "Steamed vegetables with brown rice",
+          "Chicken soup with steamed broccoli",
+          "Baked salmon with asparagus",
+          "Lentil soup with spinach",
+          "Stuffed bell peppers with black beans and rice",
+          "Stir-fried shrimp with quinoa and veggies",
+        ]),
+      },
+      exercise: {
+        morning: faker.helpers.arrayElement([
+          "15-minute jogging",
+          "20 push-ups and planks",
+          "10-minute brisk walking",
+          "30 squats and lunges",
+          "20-minute skipping rope",
+          "15-minute yoga session",
+        ]),
+        evening: faker.helpers.arrayElement([
+          "30-minute yoga session",
+          "Cycling for 20 minutes",
+          "45-minute pilates session",
+          "40-minute strength training",
+          "25-minute meditation",
+          "40-minute dancing or Zumba session",
+        ]),
+      },
+    },
+  ];
 
+  return plan;
+};
 
+const assign = async () => {
+  const randomNumber = Math.floor(Math.random() * 4999) + 1;
+  const plan = generatePersonalizedPlan();
+  console.log(plan);
+  return plan;
+};
+const foodAndExercisePlan = assign();
 
+router.post("/assign-plan", async (req, res) => {
+  console.log("reached");
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: "User ID is required" });
+  }
+
+  try {
+    // Fetch the user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Prepare the food and exercise plan
+    const plan = foodAndExercisePlan.map((day, index) => ({
+      day: index + 1,
+      food: day.food,
+      exercise: day.exercise,
+    }));
+
+    // Update user's items in database
+    user.items.food = plan.map((p) => p.food);
+    user.items.exercise = plan.map((p) => p.exercise);
+
+    // Update user's `isNew` to false (onboarding completed)
+    user.isNewUser = false;
+
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ message: "Plan assigned successfully", items: user.items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // ---------------- SIGNUP ROUTE ----------------
 router.post("/signup", async (req, res) => {
