@@ -4,9 +4,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
-// const User = mongoose.model("User");
-const Detection =require("./models/det_model");
-const User =require("./models/user_model");
+const Detection = require("./models/det_model");
+const User = require("./models/user_model");
 
 const MONGO_URI = process.env.MONGO_URI;
 const PORT = process.env.PORT || 3300;
@@ -25,11 +24,9 @@ mongoose
   .then(() => console.log("Successfully connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
 
-  require("./models/user_model");
+require("./models/user_model");
 require("./models/det_model");
 app.use(require("./routes/user_route"));
-
-
 
 // HTTP Server and Socket.IO Initialization
 const server = http.createServer(app);
@@ -42,17 +39,17 @@ const io = socketIo(server, {
 
 // POST /detected - Save Detection for a User
 app.post("/detected", async (req, res) => {
-  const { userId, eegValue, seizureDetected } = req.body;
+  const { email, eegValue, seizureDetected } = req.body;
 
-  if (!userId || eegValue === undefined || seizureDetected === undefined) {
+  if (!email || eegValue === undefined || seizureDetected === undefined) {
     return res.status(400).json({ message: "Invalid data format" });
   }
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const newDetection = new Detection({ userId, eegValue, seizureDetected });
+    const newDetection = new Detection({ userId: user._id, eegValue, seizureDetected });
     await newDetection.save();
 
     user.detections.push(newDetection._id);
@@ -61,7 +58,7 @@ app.post("/detected", async (req, res) => {
     console.log("Detection Data Received:", newDetection);
 
     // Emit new detection to the user's room
-    io.to(userId).emit("newDetectionUpdate", newDetection);
+    io.to(user._id.toString()).emit("newDetectionUpdate", newDetection);
 
     res.status(200).json({ message: "Data received successfully", data: newDetection });
   } catch (err) {
@@ -70,12 +67,12 @@ app.post("/detected", async (req, res) => {
   }
 });
 
-// GET /detections/:userId - Fetch User's Detections
-app.get("/detections/:userId", async (req, res) => {
-  const { userId } = req.params;
+// GET /detections/:email - Fetch User's Detections
+app.get("/detections/:email", async (req, res) => {
+  const { email } = req.params;
 
   try {
-    const user = await User.findById(userId).populate("detections");
+    const user = await User.findOne({ email }).populate("detections");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     res.status(200).json(user.detections);
@@ -89,9 +86,9 @@ app.get("/detections/:userId", async (req, res) => {
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  socket.on("joinUserRoom", (userId) => {
-    socket.join(userId);
-    console.log(`Client joined room for userId: ${userId}`);
+  socket.on("joinUserRoom", (email) => {
+    socket.join(email);
+    console.log(`Client joined room for email: ${email}`);
   });
 
   socket.on("disconnect", () => {
@@ -99,6 +96,9 @@ io.on("connection", (socket) => {
   });
 });
 
+app.get('/',(req,res)=>{
+  res.send("I am Running")
+})
 // Start the Server
 server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
