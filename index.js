@@ -38,7 +38,7 @@ mongoose.set("strictQuery", true);
 // MongoDB Connection
 mongoose
   .connect(MONGO_URI, {
-    serverSelectionTimeoutMS: 15000, // 15 seconds
+    serverSelectionTimeoutMS: 15000,
   })
   .then(() => console.log("Successfully connected to MongoDB"))
   .catch((err) => console.error("Error connecting to MongoDB:", err));
@@ -57,8 +57,8 @@ const io = socketIo(server, {
   },
 });
 
-// Store latest detection data
-let latestDetection = {};
+// Array to store all EEG detections
+let detectionHistory = [];
 
 // POST API endpoint to receive data from Arduino
 app.post("/detected", (req, res) => {
@@ -69,22 +69,23 @@ app.post("/detected", (req, res) => {
     return res.status(400).json({ message: "Invalid data format" });
   }
 
-  // Update latest detection data
-  latestDetection = {
+  // Add detection data to history
+  const detection = {
     eegValue,
     seizureDetected,
     timestamp: new Date(),
   };
+  detectionHistory.push(detection);
 
-  console.log("Detection Data Received:", latestDetection);
+  console.log("Detection Data Received:", detection);
 
-  // Emit data to all connected WebSocket clients
-  io.emit("detectionUpdate", latestDetection);
+  // Emit updated detection history to all connected WebSocket clients
+  io.emit("detectionHistoryUpdate", detectionHistory);
 
   // Respond to Arduino with success message
   res.status(200).json({
     message: "Data received successfully",
-    data: latestDetection,
+    data: detection,
   });
 });
 
@@ -92,8 +93,8 @@ app.post("/detected", (req, res) => {
 io.on("connection", (socket) => {
   console.log("New client connected");
 
-  // Send the latest detection data to newly connected clients
-  socket.emit("detectionUpdate", latestDetection);
+  // Send the entire detection history to newly connected clients
+  socket.emit("detectionHistoryUpdate", detectionHistory);
 
   socket.on("disconnect", () => {
     console.log("Client disconnected");
