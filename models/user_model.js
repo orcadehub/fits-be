@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
   completedDays: { type: [Number], default: [] },
   scheduleAdherence: { type: Number, default: 0 },
 
+  // Guardian emails
+  guardian1Email: { type: String, required: true },
+  guardian2Email: { type: String, required: true },
+
   // New Field: Store references to detection records
   detections: [{ type: mongoose.Schema.Types.ObjectId, ref: "Detection" }],
 });

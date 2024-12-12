@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
+const nodemailer = require("nodemailer"); // Import Nodemailer
 const Detection = require("./models/det_model");
 const User = require("./models/user_model");
 
@@ -37,21 +38,39 @@ const io = socketIo(server, {
   },
 });
 
+// Mailtrap SMTP Setup (Dummy Email for Testing)
+const transporter = nodemailer.createTransport({
+  host: "sandbox.smtp.mailtrap.io", // Mailtrap SMTP server
+  port: 587,
+  auth: {
+    user: "12d4432bf005c4", // Replace with your Mailtrap username
+    pass: "7a36ea21b93c71", // Replace with your Mailtrap password
+  },
+});
+
 // POST /detected - Save Detection for a User
 app.post("/detected", async (req, res) => {
-  const { email, eegValue, seizureDetected } = req.body;
+  const { email, eegValue, seizureDetected, longitude, latitude } = req.body;
 
+  // Validate request body
   if (!email || eegValue === undefined || seizureDetected === undefined) {
     return res.status(400).json({ message: "Invalid data format" });
   }
 
   try {
+    // Find the user by email
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const newDetection = new Detection({ userId: user._id, eegValue, seizureDetected });
+    // Create a new detection record
+    const newDetection = new Detection({
+      userId: user._id,
+      eegValue,
+      seizureDetected,
+    });
     await newDetection.save();
 
+    // Add detection to user's record
     user.detections.push(newDetection._id);
     await user.save();
 
@@ -60,7 +79,58 @@ app.post("/detected", async (req, res) => {
     // Emit new detection to the user's room
     io.to(user._id.toString()).emit("newDetectionUpdate", newDetection);
 
-    res.status(200).json({ message: "Data received successfully", data: newDetection });
+    // If seizure is detected, send emails to guardians and user
+    if (seizureDetected) {
+      const currentLocation =
+        longitude && latitude
+          ? `Latitude: ${latitude}, Longitude: ${longitude}`
+          : "Location not available";
+
+      // Email content
+      const emailText = `
+        Hello,
+
+        A seizure has been detected for ${user.name}. Here are the details:
+
+        - EEG Value: ${eegValue}
+        - Seizure Detected: Yes
+        - Current Location: ${currentLocation}
+
+        Immediate attention is required.
+
+        If ${user.name} is in a safe location, please stay calm. We recommend contacting a healthcare provider for further guidance.
+
+        Stay safe,
+        The Seizure Detection System
+      `;
+
+      // Define recipients (user and guardians)
+      const recipients = [user.email, user.guardian1Email, user.guardian2Email];
+
+      // Send email to all recipients
+      recipients.forEach((recipient) => {
+        const mailOptions = {
+          from: "no-reply@dummyemail.com",
+          to: recipient,
+          subject: "Seizure Detected - Immediate Attention Required",
+          text: emailText,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.log(`Error sending email to ${recipient}:`, error);
+          } else {
+            console.log(`Email sent to ${recipient}:`, info.response);
+          }
+        });
+      });
+    }
+
+    // Response
+    res.status(200).json({
+      message: "Data received successfully",
+      data: newDetection,
+    });
   } catch (err) {
     console.error("Error saving detection data:", err);
     res.status(500).json({ message: "Server error" });
@@ -96,9 +166,10 @@ io.on("connection", (socket) => {
   });
 });
 
-app.get('/',(req,res)=>{
-  res.send("I am Running")
-})
+app.get("/", (req, res) => {
+  res.send("I am Running");
+});
+
 // Start the Server
 server.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

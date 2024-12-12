@@ -458,21 +458,37 @@ router.post("/mark-completed", async (req, res) => {
 // ---------------- SIGNUP ROUTE ----------------
 router.post("/signup", async (req, res) => {
   console.log(req.body);
-  const { name, email, phone, password, confirmPassword } = req.body;
 
-  // Client-Side Validation Check
-  if (!name || !email || !phone || !password || !confirmPassword) {
+  const {
+    name,
+    email,
+    phone,
+    password,
+    confirmPassword,
+    guardian1Email,
+    guardian2Email,
+  } = req.body;
+
+  // Validation for Required Fields
+  if (
+    !name ||
+    !email ||
+    !phone ||
+    !password ||
+    !confirmPassword ||
+    !guardian1Email ||
+    !guardian2Email
+  ) {
     return res.status(400).json({ error: "Please fill all fields" });
   }
 
+  // Password Match Validation
   if (password !== confirmPassword) {
-    return res
-      .status(400)
-      .json({ error: "Passwords do not match from backend" });
+    return res.status(400).json({ error: "Passwords do not match" });
   }
 
   try {
-    // Check if user already exists
+    // Check if user already exists (by email or phone)
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
       return res
@@ -480,21 +496,24 @@ router.post("/signup", async (req, res) => {
         .json({ error: "User with this email or phone already exists" });
     }
 
-    // Hash password
+    // Optional: Hash password for security
     // const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create new user
+    // Create new user with guardian emails
     const user = new User({
       name,
       email,
       phone,
-      password: password,
+      password, // Store hashedPassword if hashing
+      guardian1Email,
+      guardian2Email,
     });
 
+    // Save user to database
     await user.save();
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    console.log(err);
+    console.error("Error during signup:", err.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -591,8 +610,5 @@ router.post("/user-details", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
-
 
 module.exports = router;
