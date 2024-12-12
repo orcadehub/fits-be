@@ -40,11 +40,11 @@ const io = socketIo(server, {
 
 // Mailtrap SMTP Setup (Dummy Email for Testing)
 const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io", // Mailtrap SMTP server
+  host: "http://sandbox.smtp.mailtrap.io", // Mailtrap SMTP server
   port: 587,
   auth: {
-    user: "12d4432bf005c4", // Replace with your Mailtrap username
-    pass: "7a36ea21b93c71", // Replace with your Mailtrap password
+    user: "663df1d02626b4", // Replace with your Mailtrap username
+    pass: "7c9552e1329d7c", // Replace with your Mailtrap password
   },
 });
 
