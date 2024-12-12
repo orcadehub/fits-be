@@ -38,15 +38,18 @@ const io = socketIo(server, {
   },
 });
 
-// Mailtrap SMTP Setup (Dummy Email for Testing)
 const transporter = nodemailer.createTransport({
-  host: "http://sandbox.smtp.mailtrap.io", // Mailtrap SMTP server
-  port: 587,
+  service: 'gmail',
   auth: {
-    user: "663df1d02626b4", // Replace with your Mailtrap username
-    pass: "7c9552e1329d7c", // Replace with your Mailtrap password
+    user: 'orcadehub2@gmail.com',
+    pass: 'mgkrsxpswbuzcbok',
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  debug: true,
 });
+
 
 // POST /detected - Save Detection for a User
 app.post("/detected", async (req, res) => {
